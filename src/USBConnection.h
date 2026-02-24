@@ -58,6 +58,7 @@ protected:
     RawUsbMessage usbQueue[QUEUE_SIZE];
     volatile int queueHead;
     volatile int queueTail;
+    volatile bool transferInFlight;
     portMUX_TYPE queueMux;
 
     // Connection control data
