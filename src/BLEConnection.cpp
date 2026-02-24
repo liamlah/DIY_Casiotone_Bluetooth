@@ -13,12 +13,25 @@ BLEConnection::~BLEConnection() {
 void BLEConnection::begin(const std::string& deviceName) {
     BLEDevice::init(String(deviceName.c_str()));
     pServer = BLEDevice::createServer();
+    class ServerCallbacks : public BLEServerCallbacks {
+    void onDisconnect(BLEServer* pServer) override {
+        BLEDevice::startAdvertising();
+        }
+    };
+    pServer->setCallbacks(new ServerCallbacks());
 
     BLEService* pService = pServer->createService(BLE_MIDI_SERVICE_UUID);
     pCharacteristic = pService->createCharacteristic(
         BLE_MIDI_CHARACTERISTIC_UUID,
-        BLECharacteristic::PROPERTY_WRITE_NR | BLECharacteristic::PROPERTY_NOTIFY
+        BLECharacteristic::PROPERTY_READ |
+        BLECharacteristic::PROPERTY_WRITE_NR |
+        BLECharacteristic::PROPERTY_NOTIFY    
     ); // Added notify
+
+    // This descriptor is required for notify to work
+    BLEDescriptor *pCCCD = new BLEDescriptor(BLEUUID((uint16_t)0x2902));
+    pCharacteristic->addDescriptor(pCCCD);
+
 
     // Create a write callback that extracts the first 4 bytes and forwards them.
     class BLECallback : public BLECharacteristicCallbacks {
