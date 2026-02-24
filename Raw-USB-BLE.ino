@@ -12,42 +12,27 @@
 #include "USBConnection.h"
 #include "BLEConnection.h"
 
-extern BLEConnection bleMidi;
-
 // --- USB: Subclass with override ---
 
 class MyRawUSB : public USBConnection {
 public:
     void onMidiDataReceived(const uint8_t* data, size_t length) override {
-        // data[0] = Cable Number / Code Index Number (USB-MIDI header)
-        // data[1] = MIDI status byte (e.g., 0x90 = NoteOn ch1)
-        // data[2] = MIDI data byte 1 (e.g., note number)
-        // data[3] = MIDI data byte 2 (e.g., velocity)
-        Serial.printf("[USB] CIN:%02X  Status:%02X  Data1:%02X  Data2:%02X  BLE:%s\n",
-                  data[0], data[1], data[2], data[3],
-                  bleMidi.isConnected() ? "CONNECTED" : "NOT CONNECTED");
+    // Still log it for debugging
+    Serial.printf("[USB] CIN:%02X  Status:%02X  Data1:%02X  Data2:%02X\n",
+                  data[0], data[1], data[2], data[3]);
 
-        // Forward over BLE if connected
-        if (bleMidi.isConnected()) {
-            // BLE MIDI packet format: [header, timestamp, status, data1, data2]
-            uint8_t blePkt[5];
-            blePkt[0] = 0x80;  // BLE MIDI header byte
-            blePkt[1] = 0x80;  // BLE MIDI timestamp byte
-            blePkt[2] = data[1]; // MIDI status
-            blePkt[3] = data[2]; // MIDI data 1
-            blePkt[4] = data[3]; // MIDI data 2
-            bleMidi.sendMidi(blePkt, 5);
-        }
+    // Forward over BLE if connected
+    if (bleMidi.isConnected()) {
+        // BLE MIDI packet format: [header, timestamp, status, data1, data2]
+        uint8_t blePkt[5];
+        blePkt[0] = 0x80;  // BLE MIDI header byte
+        blePkt[1] = 0x80;  // BLE MIDI timestamp byte
+        blePkt[2] = data[1]; // MIDI status
+        blePkt[3] = data[2]; // MIDI data 1
+        blePkt[4] = data[3]; // MIDI data 2
+        bleMidi.sendMidi(blePkt, 5);
     }
-
-    void onDeviceConnected() override {
-        Serial.println("[USB] MIDI device connected!");
-        Serial.println("[USB] Last error: " + getLastError());
-    }
-
-    void onDeviceDisconnected() override {
-        Serial.println("[USB] MIDI device disconnected!");
-    }
+}
 };
 
 MyRawUSB usbMidi;
@@ -82,7 +67,7 @@ void setup() {
 
     // Initialize BLE MIDI server
     bleMidi.setMidiMessageCallback(onBleRawData);
-    bleMidi.begin("WU-BT10 MIDI");
+    bleMidi.begin("ESP32 Raw MIDI");
     Serial.println("BLE MIDI server started. Advertising as 'ESP32 Raw MIDI'.");
     Serial.println();
 }
