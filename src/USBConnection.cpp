@@ -26,7 +26,8 @@ USBConnection::USBConnection()
     isMidiDeviceConfirmed(false),
     deviceName(""),
     lastError(""),
-    usbTaskHandle(nullptr)
+    usbTaskHandle(nullptr),
+    transferInFlight(false)
 {
 }
 
@@ -136,20 +137,14 @@ void USBConnection::_usbTask(void* arg) {
     for (;;) {
         usb_host_lib_handle_events(1, &usbCon->eventFlags);
         usb_host_client_handle_events(usbCon->clientHandle, 1);
-
-        if (usbCon->isReady && usbCon->midiTransfer) {
-            unsigned long now = millis();
-            if ((now - usbCon->lastCheck) > usbCon->interval) {
-                usbCon->lastCheck = now;
-                usb_host_transfer_submit(usbCon->midiTransfer);
-            }
+        vTaskDelay(1);
         }
     }
-}
 
 // ---------- Internal Callbacks ----------
 
 void USBConnection::_clientEventCallback(const usb_host_client_event_msg_t *eventMsg, void *arg) {
+    Serial.printf("[USB] Client event: %d\n", eventMsg->event);  // DEBUG
     USBConnection *usbCon = static_cast<USBConnection*>(arg);
     esp_err_t err;
     switch (eventMsg->event) {
@@ -187,16 +182,19 @@ void USBConnection::_clientEventCallback(const usb_host_client_event_msg_t *even
 
 void USBConnection::_onReceive(usb_transfer_t *transfer) {
     USBConnection *usbCon = static_cast<USBConnection*>(transfer->context);
+    usbCon->transferInFlight = false;
+
     if (transfer->status == 0 && transfer->actual_num_bytes >= 4) {
-        // Iterate in 4-byte blocks (each block = 1 USB-MIDI event)
         for (int offset = 0; offset + 4 <= transfer->actual_num_bytes; offset += 4) {
             if (transfer->data_buffer[offset] == 0x00) continue;
+            if (transfer->data_buffer[offset + 1] == 0xFE) continue;
             usbCon->enqueueMidiMessage(transfer->data_buffer + offset, 4);
         }
     }
-    if (usbCon->isReady) {
-        esp_err_t err = usb_host_transfer_submit(transfer);
-        (void)err;
+
+    if (usbCon->isReady && !usbCon->transferInFlight) {
+        usbCon->transferInFlight = true;
+        usb_host_transfer_submit(transfer);
     }
 }
 
@@ -253,6 +251,9 @@ void USBConnection::_processConfig(const usb_config_desc_t *config_desc) {
                                         interval = (bInterval == 0) ? 1 : bInterval;
                                         isReady = true;
                                         claimedOk = true;
+                                        transferInFlight = true;
+                                        vTaskDelay(pdMS_TO_TICKS(200)); // Delay for CT-S1 before first transfer
+                                        usb_host_transfer_submit(midiTransfer);  // first transfer after setup
                                         return;
                                     }
                                 }
