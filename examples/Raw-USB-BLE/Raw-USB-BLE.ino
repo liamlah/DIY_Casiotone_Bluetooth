@@ -83,7 +83,7 @@ void setup() {
     // Initialize BLE MIDI server
     bleMidi.setMidiMessageCallback(onBleRawData);
     bleMidi.begin("WU-BT10 MIDI");
-    Serial.println("BLE MIDI server started. Advertising as 'ESP32 Raw MIDI'.");
+    Serial.println("BLE MIDI server started. Advertising as 'WU-BT10'.");
     Serial.println();
 }
 
