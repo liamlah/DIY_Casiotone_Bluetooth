@@ -1,6 +1,7 @@
 MIT License
 
 Copyright (c) 2025 Saulo Veríssimo
+Copyright (c) 2025 Liam Jones
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +26,7 @@ SOFTWARE.
 Licença MIT
 
 Copyright (c) 2025 Saulo Veríssimo
+Copyright (c) 2025 Liam Jones
 
 É concedida permissão, gratuitamente, a qualquer pessoa que obtenha uma cópia
 deste software e dos arquivos de documentação associados (o "Software"), para
@@ -48,6 +50,8 @@ FORA DE OU EM CONEXÃO COM O SOFTWARE OU O USO OU OUTRAS NEGOCIAÇÕES NO SOFTWA
 Licencia MIT
 
 Derechos de autor (c) 2025 Saulo Veríssimo
+Derechos de autor (c) 2025 Liam Jones
+
 
 Se concede permiso, de forma gratuita, a cualquier persona que obtenga una copia
 de este software y los archivos de documentación asociados (el "Software"), para
@@ -71,6 +75,8 @@ DE, FUERA O EN CONEXIÓN CON EL SOFTWARE O EL USO U OTRAS NEGOCIACIONES EN EL SO
 Licenza MIT
 
 Copyright (c) 2025 Saulo Veríssimo
+Copyright (c) 2025 Liam Jones
+
 
 Si concede il permesso, gratuitamente, a chiunque ottenga una copia di questo software
 e dei file di documentazione associati (il "Software"), di trattare il Software senza
