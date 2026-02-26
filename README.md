@@ -14,12 +14,15 @@ This project is a fork of work by [sauloverissimo](https://github.com/sauloveris
 
 ## Hardware requirements
 
-- [ESP32-S3 development board](https://www.aliexpress.com/item/1005010674295938.html). The s3-n16r8 variant will be ideal. You will not need the one with soldered pins, but it will not hinder the project either. You should be able to get this for less than $10 USD
+- [ESP32-S3 development board](https://www.aliexpress.com/item/1005010674295938.html). The s3-n16r8 variant will be ideal. You will not need the one with soldered pins, but it will not hinder the project either. You should be able to get this for less than $10 USD.
 - USB-C OTG adaptor
 - USB Micro cable
 - USB A to USB C cable (This can be an inexpensive, charging only USB cable)
 
 - A soldering iron and some solder (This requires only minimal soldering and can be done without previous soldering experience. If you don't have one, ask a friend.)
+
+<img src="https://github.com/user-attachments/assets/55aa9c89-d56f-40d1-85db-de4259ea5d72" width="500" />
+
 
 ---
 
@@ -37,7 +40,10 @@ At present it does not support bluetooth audio in. I have not yet explored wheth
 
 In order to initiate a handshake with the micro usb port on the keyboard, the keyboard's port must receive power from the ESP32 board. At factory settings, the OTG port does not provide power. This is easily addressed by shorting two jumper pads on the bottom of the board.
 
-[boardbottom] [boardbottomSoldered]
+<img src="https://github.com/user-attachments/assets/d6b4349f-8bb8-4ade-8848-3ed296a593ad" width="400" />
+<img src="https://github.com/user-attachments/assets/4ad86d60-96f9-4796-8f7c-5a6448239871" width="400" />
+
+
 
 One might be temped to try a split OTG cable (such as this [this](https://www.amazon.com.au/dp/B08C5FWQND)) with an additional port for power to avoid soldering. **In testing this has not appeared to work.**
 
@@ -45,8 +51,8 @@ One might be temped to try a split OTG cable (such as this [this](https://www.am
 
 ##  Setup
 
-- This project uses the [arduino IDE](https://www.arduino.cc/en/software) software. Install this if you haven't already got it.
-- Download this repo into your arduino folder
+- This project uses the [arduino IDE](https://www.arduino.cc/en/software) software. Install this if you haven't already.
+- Download this repo and extract into your arduino folder
 - Copy the contents of the src folder into the DIY_Casiotone_Bluetooth/examples/Raw-USB-BLE/ folder.
 - Plug the ESP32 into the computer via the com port, lablelled on the underside of the board.
 - Open the Raw-USB-BLE.ino in the IDE and click upload
