@@ -28,9 +28,9 @@ This project is a fork of work by [sauloverissimo](https://github.com/sauloveris
 
 ## Overview
 
-This project mimics the BLE functionality of the WU-BT10, allowing pairing of the keyboard with other devices, iPad, android etc. and the use of Midi piano apps, including Casio Music Space.
+This project mimics the BLE Midi functionality of the WU-BT10, allowing pairing of Casiotone keyboards with other devices; iPad, Android, MacOS, Windows, and the use of Midi piano apps, including Casio Music Space.
 
-At present it does not support bluetooth audio in. I have not yet explored whether this is viable.
+**Unlike the WU-BT10, this project *does not* support bluetooth audio-in, this is a limitation of the Micro USB port on the Casiotone devices, which does not USB Audio Class as a device.**
 
 ---
 
@@ -103,3 +103,7 @@ Change this to whatever you want it to be broadcast as, but note the 'Casio Musi
 ![Case]
 
 
+## Issues
+
+- [ ] Device does not automatically reconnect if connection is lost (e.g if the port is jostled)
+- [ ] Currently requires the OTG port to be unplugged on boot, then plugged in, in order to establish a connection
