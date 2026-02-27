@@ -37,7 +37,6 @@ This project mimics the BLE Midi functionality of the WU-BT10, allowing pairing 
 
 
 ## Soldering
-
 In order to initiate a handshake with the micro usb port on the keyboard, the keyboard's port must receive power from the ESP32 board. At factory settings, the OTG port does not provide power. This is easily addressed by shorting two jumper pads on the bottom of the board.
 
 <img src="https://github.com/user-attachments/assets/d6b4349f-8bb8-4ade-8848-3ed296a593ad" width="400" />
@@ -49,18 +48,29 @@ One might be temped to try a split OTG cable (such as this [this](https://www.am
 
 
 
-##  Setup
+## Sofware Setup
 
-- This project uses the [arduino IDE](https://www.arduino.cc/en/software) software. Install this if you haven't already.
-- Download this repo and extract into your arduino folder
+### Installing from Binary (easiest)
+
+Visit the [Github.io][https://liamlah.github.io/DIY_Casiotone_Bluetooth/] page for a one-click install, Then skip to [Cable Configuration](#Cable-Configuration).
+
+### Compiling Yourself 
+
+- This project uses the [arduino IDE](https://www.arduino.cc/en/software) software
+- Install this if you haven't already
+- Open the Arduino IDE, select Tools > Board > Board Manager
+- In Board manager search "espressif" and install 'esp32 by Espressif Systems'
+- Once that has installed, go back to Tools > Board > esp32 and select 'ESP32S3 Dev module'
+- Click the library icon on the left hand panel and search 'FastLED' the install FastLED by Daniel Garcia
+- Download the Casiotone DIY Bluetooth repo and extract into your home/Arduino folder
 - Copy the contents of the src folder into the DIY_Casiotone_Bluetooth/examples/Raw-USB-BLE/ folder.
-- Plug the ESP32 into the computer via the com port, lablelled on the underside of the board.
+- Plug the ESP32 into the computer via the com port, lablelled on the underside of the board. On Linux you may need to give
 - Open the Raw-USB-BLE.ino in the IDE and click upload
-- The device is now ready to be plugged into the Casiotone keyboard using the cable configuration detailed below. However if you want to confirm it is working first, keep the ESP32 plugged into the computer, click the "Serial monitor" icon up the top right, and plug the ESP32's OTG port into the Casiotone keyboard's micro USB port. You should see "MIDI device connected!" in the IDE console, and key presses on your keyboard should appear in the console. You can alse test BLE connectivity. by attempting to connect a device. The ESP32 will broadcast as 'WU-BT10'.
+- The device is now ready to be plugged into the Casiotone keyboard using the cable configuration detailed below. However if you want to confirm it is working first, keep the ESP32 plugged into the computer, click the "Serial monitor" icon up the top right, and plug the ESP32's OTG port into the Casiotone keyboard's micro USB port. You should see "MIDI device connected!" in the IDE console, and key presses on your keyboard should appear in the console. You can alse test BLE connectivity. by attempting to connect a device. The ESP32 will broadcast as 'WU-BT10'
 
 ## Cable Configuration
  
-The ESP32-S3 has two USB ports, on the under side of the board, these are labelled OTG, and COM. We will use COM to power the device using the USB A port on the back of the Casiotone keyboard, we will then connect the OTG port to the micro usb port on the back of the Casiotone keyboard using an OTG cable and a micro usb cable. this is from where it will recieve the MIDI signals.
+The ESP32-S3 has two USB ports, on the under side of the board, these are labelled OTG, and COM. We will use COM to power the device using the USB A port on the back of the Casiotone keyboard, we will then connect the OTG port to the micro usb port on the back of the Casiotone keyboard using an OTG cable and a micro usb cable. this is from where it will recieve the MIDI signals. When the ESP32 is inside a [case](#Case), the OTG cable will be on the same side as the LED
 
 Unlike the WU-BT10, we cannot use the USB A port for MIDI out, as it uses a proprietary handshake to connect to the WU-BT 10. We can however exploit it to power our imposter device. 
 
@@ -70,8 +80,10 @@ Unlike the WU-BT10, we cannot use the USB A port for MIDI out, as it uses a prop
 
 ### LED indicator
 
+The LED on the top of the board can be used to visually check the current state of the the device.
+
 🔴 Red — no keyboard connected
-🔵 Blue flashing — keyboard connected, waiting for BLE
+🔵 Blue flashing — keyboard connected, waiting to pair Bluetooth.
 🟢 Green — fully operational
 
 
@@ -93,12 +105,12 @@ Unlike the WU-BT10, we cannot use the USB A port for MIDI out, as it uses a prop
 
 ## Other points
 
-- You can change the name the device advertises itself as via BLE by changing a line in the RAW-USB-BLE.ino
+- You can change the name the device advertises itself as via BLE by changing a line in the CT-USB-BLE.ino
 
 ```
     bleMidi.begin("WU-BT10 MIDI");
 ```
-Change this to whatever you want it to be broadcast as, but note the 'Casio Music Space' app will only connect if it 
+Change this to whatever you want it to be broadcast as, but note the 'Casio Music Space' app will only connect if broadcasts as WU-BT10 MIDI.
 
 
 
@@ -112,5 +124,5 @@ Change this to whatever you want it to be broadcast as, but note the 'Casio Musi
 
 ## Issues
 
-- [ ] Device does not automatically reconnect if connection is lost (e.g if the port is jostled)
-- [ ] Currently requires the OTG port to be unplugged on boot, then plugged in, in order to establish a connection
+- [ ] Device does not cleanly reconnect if connection is lost (e.g if the port is jostled). The current workaround is that the board automatically reboots on a lost USB connection. This increases reliability with the keyboard, but means BLE must be re-paired with your device. Contributions welcome for this fix. 
+
