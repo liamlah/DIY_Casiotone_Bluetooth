@@ -68,6 +68,13 @@ Unlike the WU-BT10, we cannot use the USB A port for MIDI out, as it uses a prop
 
 ## Troubleshooting
 
+### LED indicator
+
+🔴 Red — no keyboard connected
+🔵 Blue flashing — keyboard connected, waiting for BLE
+🟢 Green — fully operational
+
+
 ### Nothing happens when I plug the device into the keyboard
 
 - Make sure you have tested while connected to the IDE with the serial monitor open.

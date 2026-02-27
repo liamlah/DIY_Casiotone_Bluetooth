@@ -1,3 +1,7 @@
+// Originally based on ESP32_Host_MIDI by Saulo Veríssimo 
+// https://github.com/sauloverissimo/ESP32_Host_MIDI 
+// Modified by Liam Jones, 2025
+
 #ifndef USB_CONNECTION_H
 #define USB_CONNECTION_H
 
@@ -59,6 +63,8 @@ protected:
     volatile int queueHead;
     volatile int queueTail;
     volatile bool transferInFlight;
+    volatile bool enumRetryPending;
+    uint32_t enumRetryTime;
     portMUX_TYPE queueMux;
 
     // Connection control data
