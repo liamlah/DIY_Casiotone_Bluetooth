@@ -5,7 +5,7 @@ This project is intended to provide a low cost alternative to the Casio [WU-BT10
 
 Note: This has only been tested on the Casiotone CT-S1, but should work on any Casiotone keyboard listed above provided they have both a micro USB, and an USB A port.
 
-The device will allow you to wirelessly connect to Midi keyboard apps on Android, IOS, MacOS, etc. It will also allow you to connect to the Casio Music Space app available on [Android](https://play.google.com/store/apps/details?id=jp.co.casio.CasioMusicCity&hl=en)(tested) or [IOS](https://apps.apple.com/us/app/casio-music-space/id1561343853)(not tested)
+The device will allow you to wirelessly connect to MIDI keyboard apps on Android, IOS, MacOS, etc. It will also allow you to connect to the Casio Music Space app available on [Android](https://play.google.com/store/apps/details?id=jp.co.casio.CasioMusicCity&hl=en)(tested) or [IOS](https://apps.apple.com/us/app/casio-music-space/id1561343853)(not tested)
 
 This project relies heavily on work by [sauloverissimo](https://github.com/sauloverissimo/ESP32_Host_MIDI). With code changes specifically for compatibility with Casiotone keyboards.
 
@@ -40,14 +40,14 @@ This project mimics the BLE Midi functionality of the WU-BT10, allowing pairing 
 
 
 ## Soldering
-In order to initiate a handshake with the micro usb port on the keyboard, the keyboard's port must receive power from the ESP32 board. At factory settings, the OTG port does not provide power. This is easily addressed by shorting two jumper pads on the bottom of the board. This should not be daunting even for those without previous soldering experience.
+In order to initiate a handshake with the micro usb port on the keyboard, the keyboard's port must receive power from the ESP32 board. At factory configuration, the OTG port does not provide power. This is easily addressed by shorting two jumper pads on the bottom of the board. This should not be daunting even for those without previous soldering experience.
 
 <img src="https://github.com/user-attachments/assets/d6b4349f-8bb8-4ade-8848-3ed296a593ad" width="400" />
 <img src="https://github.com/user-attachments/assets/4ad86d60-96f9-4796-8f7c-5a6448239871" width="400" />
 
 
 
-One might be temped to try a split OTG cable (such as this [this](https://www.amazon.com.au/dp/B08C5FWQND)) with an additional port for power to avoid soldering. **In testing this has not appeared to work.**
+One might be temped to try a split OTG cable (such as [this](https://www.amazon.com.au/dp/B08C5FWQND)) with an additional port for power to avoid soldering. **In testing this has not appeared to work.**
 
 
 
@@ -86,7 +86,9 @@ Unlike the WU-BT10, we cannot use the USB A port for MIDI out, as it uses a prop
 The LED on the top of the board can be used to visually check the current state of the the device.
 
 🔴 Red — no keyboard connected
+
 🔵 Blue flashing — keyboard connected, waiting to pair Bluetooth.
+
 🟢 Green — fully operational
 
 
