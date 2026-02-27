@@ -1,3 +1,8 @@
+// Originally based on ESP32_Host_MIDI by Saulo Veríssimo 
+// https://github.com/sauloverissimo/ESP32_Host_MIDI 
+// Modified by Liam Jones, 2025
+
+
 #include "USBConnection.h"
 #include <string.h>
 
@@ -27,7 +32,9 @@ USBConnection::USBConnection()
     deviceName(""),
     lastError(""),
     usbTaskHandle(nullptr),
-    transferInFlight(false)
+    transferInFlight(false),
+    enumRetryPending(false),
+    enumRetryTime(0)
 {
 }
 
@@ -136,10 +143,29 @@ void USBConnection::_usbTask(void* arg) {
     USBConnection* usbCon = static_cast<USBConnection*>(arg);
     for (;;) {
         usb_host_lib_handle_events(1, &usbCon->eventFlags);
-        usb_host_client_handle_events(usbCon->clientHandle, 1);
-        vTaskDelay(1);
+        
+        // When all devices are gone, free them so new connections can be accepted
+        if (usbCon->eventFlags & USB_HOST_LIB_EVENT_FLAGS_ALL_FREE) {
+            Serial.println("[USB] All devices free, ready for reconnect.");
         }
+        if (usbCon->eventFlags & USB_HOST_LIB_EVENT_FLAGS_NO_CLIENTS) {
+            usb_host_device_free_all();
+        }
+
+        usb_host_client_handle_events(usbCon->clientHandle, 1);
+
+        // Handle non-blocking enum retry
+        if (usbCon->enumRetryPending && millis() > usbCon->enumRetryTime) {
+            usbCon->enumRetryPending = false;
+            if (usbCon->midiTransfer && !usbCon->transferInFlight) {
+                usbCon->transferInFlight = true;
+                usb_host_transfer_submit(usbCon->midiTransfer);
+            }
+        }
+
+        vTaskDelay(1);
     }
+}
 
 // ---------- Internal Callbacks ----------
 
@@ -167,15 +193,15 @@ void USBConnection::_clientEventCallback(const usb_host_client_event_msg_t *even
             usbCon->onDeviceConnected();
             break;
         case USB_HOST_CLIENT_EVENT_DEV_GONE:
+            usbCon->isReady = false;
+            usbCon->transferInFlight = false;
             if (usbCon->midiTransfer) {
                 usb_host_transfer_free(usbCon->midiTransfer);
                 usbCon->midiTransfer = nullptr;
             }
-            usb_host_device_close(usbCon->clientHandle, usbCon->deviceHandle);
-            usbCon->isReady = false;
-            usbCon->onDeviceDisconnected();
-            break;
-        default:
+            Serial.println("[USB] Device gone - rebooting...");
+            delay(500); // let serial flush
+            ESP.restart();
             break;
     }
 }
