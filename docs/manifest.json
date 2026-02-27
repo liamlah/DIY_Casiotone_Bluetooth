@@ -1,0 +1,12 @@
+{
+  "name": "Casio BLE MIDI Bridge",
+  "version": "0.6.7",
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        { "path": "CT-USB-BLE.ino.merged.bin", "offset": 0 }
+      ]
+    }
+  ]
+}
