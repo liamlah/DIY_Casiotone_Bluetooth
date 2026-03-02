@@ -133,5 +133,6 @@ Change this to whatever you want it to be broadcast as, but note the 'Casio Musi
 
 ## Issues
 
-- [ ] Device does not cleanly reconnect if connection is lost (e.g if the port is jostled). The current workaround is that the board automatically reboots on a lost USB connection. This increases reliability with the keyboard, but means BLE must be re-paired with your device. Contributions welcome for this fix. 
+- [ ] Device does not cleanly reconnect if connection is lost (e.g if the port is jostled). The current workaround is that the board automatically reboots on a lost USB connection. This increases reliability with the keyboard, but means BLE must be re-paired with your device. Contributions welcome for this fix.
+- [ ] MIDI is unidirectional presently. Keyboard > ESP32 > MIDI app. I haven't been able to reliably implement it bidirectionally (so you can't transmit tones from MIDI app to keyboard speakers) without significant issues with notes getting dropped. Feature is off until I can work out a solution.
 
