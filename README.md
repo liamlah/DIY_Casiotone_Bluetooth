@@ -18,8 +18,10 @@ This project relies heavily on work by [sauloverissimo](https://github.com/saulo
 ## Hardware Requirements
 
 - [ESP32-S3 development board](https://www.aliexpress.com/item/1005010674295938.html). The s3-n16r8 variant will be ideal. You will not need the one with soldered pins, but it will not hinder the project either. You should be able to get this for less than $10 USD.
-- USB-C OTG adaptor
-- USB Micro cable
+- A USB-C to USB Micro cable ([This has been tested and known to work](https://www.aliexpress.com/item/1005007211765691.html))
+- OR if you have these already available, you can instead use:
+  - USB-C OTG adaptor
+  - USB Micro cable
 - USB A to USB C cable (This can be an inexpensive, charging only USB cable)
 
 - A soldering iron and some solder (This requires only minimal soldering and can be done without previous soldering experience. If you don't have one, ask a friend.)
@@ -34,6 +36,8 @@ This project relies heavily on work by [sauloverissimo](https://github.com/saulo
 This project mimics the BLE Midi functionality of the WU-BT10, allowing pairing of Casiotone keyboards with other devices; iPad, Android, MacOS, Windows, and the use of Midi piano apps, including Casio Music Space.
 
 **Unlike the WU-BT10, this project *does not* support bluetooth audio-in, this is a limitation of the Micro USB port on the Casiotone devices, which does not USB Audio Class as a device.**
+
+Sending MIDI notes from the keyboard via the device to a DAW works flawlessly in testing, with the minimal latency expected with BLE. However, receving MIDI from a DAW to play via keyboard speakers as you experience with a direct USB connection is currently a work in progress. 
 
 ---
 
@@ -57,7 +61,7 @@ One might be temped to try a split OTG cable (such as [this](https://www.amazon.
 
 Visit the [Github.io](https://liamlah.github.io/DIY_Casiotone_Bluetooth/) page for a one-click install, Then skip to [Cable Configuration](#cable-configuration).
 
-### Compiling Yourself 
+### Compiling Yourself (If not installing from binary)
 
 - This project uses the [arduino IDE](https://www.arduino.cc/en/software) software
 - Install the IDE if you haven't already
@@ -79,6 +83,14 @@ The ESP32-S3 has two USB ports, on the under side of the board, these are labell
 
 Unlike the WU-BT10, we cannot use the USB A port for MIDI out, as it uses a proprietary handshake to connect to the WU-BT 10. We can however exploit it to power our imposter device. 
 
+## Usage
+
+- Plug the device in to the Casiotone Keyboard
+- Turn on the keyboard. If the LED is red, then it is not detecting the keyboard, ensure the USB cables are in the correct ports, are not damaged, and are pushed fully into the port.
+- When connected to the keyboard, the LED will start flashing blue. Pair to your computer, tablet, etc. with BLE MIDI. Different operating systems will use different methods, often it is not the same as connecting a traditional Bluetooth device. On Android you may need to use something like [MIDI BLE Connect](https://play.google.com/store/apps/details?id=com.mobileer.example.midibtlepairing) in order for a MIDI app to see the device.
+- When the device is both connected to the Casiotone Keyboard and paired via BLE, the LED will turn green, and you are ready to play.
+- If the device becomes disconnected from the keyboard, it will reset in order to attempt to re-initiate the USB handshake, this means you will have to reconnect via BLE MIDI.
+
 ## Troubleshooting
 
 ### LED indicator
@@ -94,9 +106,9 @@ The LED on the top of the board can be used to visually check the current state 
 
 ### Nothing happens when I plug the device into the keyboard
 
-- If you have the Arduino IDE tested while connected to the IDE via COM port with the serial monitor open.
+- If you have the Arduino IDE, run the device while connected to the IDE via COM port, and the keyboard via OTG with the serial monitor open to see error messages.
 - Try a different cable. If you are using a cheap cable, it may be for charging only.
-- try flipping the orientation of the OTG cable, and ensure it is pushed fully into the USB port on the ESP32
+- Try flipping the orientation of the OTG cable, and ensure it is pushed fully into the USB port on the ESP32 device.
 
 ### The ESP32 connects but easily disconnects
 
@@ -113,7 +125,7 @@ The LED on the top of the board can be used to visually check the current state 
 
 - This will probably work fine with other MIDI keyboards, provided you have a way to power the device
 
-- You can change the name the device advertises itself as via BLE by changing a line in the CT-USB-BLE.ino
+- You can change the name the device advertises itself as via BLE if compiling yourself by changing a line in the CT-USB-BLE.ino
 
 ```
     bleMidi.begin("WU-BT10 MIDI");
@@ -133,6 +145,6 @@ Change this to whatever you want it to be broadcast as, but note the 'Casio Musi
 
 ## Issues
 
-- [ ] Device does not cleanly reconnect if connection is lost (e.g if the port is jostled). The current workaround is that the board automatically reboots on a lost USB connection. This increases reliability with the keyboard, but means BLE must be re-paired with your device. Contributions welcome for this fix.
+- [ ] Device does not cleanly reconnect if connection is lost (e.g if the port is jostled). The current workaround is that the board automatically reboots on a lost USB connection. This increases reliability with the keyboard, but means BLE must be re-paired with your device. This is a minor issue when using reliable cables. Contributions are welcome for this fix.
 - [ ] MIDI is unidirectional presently. Keyboard > ESP32 > MIDI app. I haven't been able to reliably implement it bidirectionally (so you can't transmit tones from MIDI app to keyboard speakers) without significant issues with notes getting dropped. Feature is off until I can work out a solution.
 
