@@ -64,12 +64,69 @@ void onBleRawData(const uint8_t* data, size_t length) {
         Serial.printf(" %02X", data[i]);
     }
     Serial.println();
+
+    static int received = 0;
+    static int sent = 0;
+    received++;
+
+    // Strip BLE header (first 2 bytes) and forward to keyboard over USB
+    // Parse BLE-MIDI packet: header byte, then timestamped MIDI events.
+    // A high-bit byte after a complete message is a TIMESTAMP; if the byte
+    // after it also has the high bit, that's a new status; otherwise it's
+    // running-status data.
+    if (length >= 4) {
+        const uint8_t* midi = data + 1;   // skip packet header only
+        size_t midiLen = length - 1;
+        uint8_t lastStatus = 0;
+        size_t i = 0;
+
+        while (i < midiLen) {
+            uint8_t b = midi[i];
+
+            if (b & 0x80) {
+                // Timestamp byte — peek at what follows it
+                if (i + 1 >= midiLen) break;      // trailing timestamp, done
+                uint8_t nxt = midi[i + 1];
+                if (nxt & 0x80) {
+                    lastStatus = nxt;             // timestamp + new status
+                    i += 2;
+                } else {
+                    i += 1;                       // timestamp + running-status data
+                }
+                continue;
+            }
+
+            // Data byte — belongs to lastStatus (running status)
+            if (lastStatus == 0) { i++; continue; }
+            uint8_t type = lastStatus & 0xF0;
+            if (type == 0xC0 || type == 0xD0) {
+                // 2-byte messages: Program Change, Channel Pressure
+                uint8_t msg[2] = { lastStatus, b };
+                sent++;
+                usbMidi.sendMidi(msg, 2);
+                i += 1;
+            } else if (type >= 0x80 && type <= 0xE0) {
+                // 3-byte messages: NoteOn/Off, PolyPressure, CC, PitchBend
+                if (i + 1 >= midiLen) break;
+                uint8_t msg[3] = { lastStatus, b, midi[i + 1] };
+                sent++;
+                usbMidi.sendMidi(msg, 3);
+                i += 2;
+            } else {
+                i++;  // system message data — ignore
+            }
+        }
+    }
+
+    Serial.printf("[STATS] received=%d sent=%d\n", received, sent);
 }
 
 // --- Setup & Loop ---
 
 void setup() {
     Serial.begin(115200);
+    // Free classic BT memory and give it to BLE
+    esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
     delay(1000);
     Serial.println("=== Raw MIDI Example ===");
     Serial.println("No MIDIHandler — direct access to raw bytes.");

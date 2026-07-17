@@ -24,15 +24,21 @@ USBConnection::USBConnection()
     deviceHandle(nullptr),
     eventFlags(0),
     midiTransfer(nullptr),
+    midiOutTransfer(nullptr),
     queueHead(0),
     queueTail(0),
     queueMux(portMUX_INITIALIZER_UNLOCKED),
+    transferInFlight(false),
+    outQueueHead(0),
+    outQueueTail(0),
+    outQueueMux(portMUX_INITIALIZER_UNLOCKED),
+    outTransferInFlight(false),
     firstMidiReceived(false),
     isMidiDeviceConfirmed(false),
     deviceName(""),
     lastError(""),
     usbTaskHandle(nullptr),
-    transferInFlight(false),
+
     enumRetryPending(false),
     enumRetryTime(0)
 {
@@ -75,6 +81,8 @@ void USBConnection::task() {
     // USB polling runs on the dedicated task (_usbTask on core 0).
     // Here we only drain the queue and forward to onMidiDataReceived().
     processQueue();
+    processOutQueue();
+
 }
 
 void USBConnection::onDeviceConnected() {
@@ -153,6 +161,7 @@ void USBConnection::_usbTask(void* arg) {
         }
 
         usb_host_client_handle_events(usbCon->clientHandle, 1);
+        usbCon->processOutQueue();
 
         // Handle non-blocking enum retry
         if (usbCon->enumRetryPending && millis() > usbCon->enumRetryTime) {
@@ -206,6 +215,98 @@ void USBConnection::_clientEventCallback(const usb_host_client_event_msg_t *even
     }
 }
 
+
+
+// USB-MIDI 1.0 CIN lookup (Table 4-1)
+static uint8_t _midiStatusToCIN(uint8_t status) {
+    if (status >= 0x80 && status <= 0xEF) {
+        return status >> 4;
+    }
+    switch (status) {
+        case 0xF0: return 0x04;
+        case 0xF1: return 0x02;
+        case 0xF2: return 0x03;
+        case 0xF3: return 0x02;
+        case 0xF6: return 0x05;
+        case 0xF7: return 0x05;
+        case 0xF8: return 0x0F;
+        case 0xFA: return 0x0F;
+        case 0xFB: return 0x0F;
+        case 0xFC: return 0x0F;
+        case 0xFE: return 0x0F;
+        case 0xFF: return 0x0F;
+        default:   return 0;
+    }
+}
+
+bool USBConnection::enqueueMidiOut(const uint8_t* data, size_t length) {
+    portENTER_CRITICAL(&outQueueMux);
+    int next = (outQueueHead + 1) % QUEUE_SIZE;
+    if (next == outQueueTail) {
+        portEXIT_CRITICAL(&outQueueMux);
+        return false; // queue full
+    }
+
+
+    memcpy(usbOutQueue[outQueueHead].data, data, length);
+    usbOutQueue[outQueueHead].length = length;
+    outQueueHead = next;
+    portEXIT_CRITICAL(&outQueueMux);
+    return true;
+}
+
+void USBConnection::processOutQueue() {
+    if (outTransferInFlight || !isReady || !midiOutTransfer) return;
+    
+    portENTER_CRITICAL(&outQueueMux);
+    if (outQueueTail == outQueueHead) {
+        portEXIT_CRITICAL(&outQueueMux);
+        return; // queue empty
+    }
+    RawUsbMessage msg = usbOutQueue[outQueueTail];
+    outQueueTail = (outQueueTail + 1) % QUEUE_SIZE;
+    portEXIT_CRITICAL(&outQueueMux);
+
+// Batch as many queued messages as possible into one USB transfer
+    uint8_t buffer[64];
+    int bufLen = 0;
+
+    // Add the first message we already dequeued
+    buffer[bufLen++] = _midiStatusToCIN(msg.data[0]);
+    buffer[bufLen++] = msg.data[0];
+    buffer[bufLen++] = (msg.length > 1) ? msg.data[1] : 0x00;
+    buffer[bufLen++] = (msg.length > 2) ? msg.data[2] : 0x00;
+
+    // Drain any additional queued messages into the same transfer
+    while (bufLen + 4 <= 64) {
+        portENTER_CRITICAL(&outQueueMux);
+        if (outQueueTail == outQueueHead) {
+            portEXIT_CRITICAL(&outQueueMux);
+            break;
+        }
+        RawUsbMessage next = usbOutQueue[outQueueTail];
+        outQueueTail = (outQueueTail + 1) % QUEUE_SIZE;
+        portEXIT_CRITICAL(&outQueueMux);
+
+        buffer[bufLen++] = _midiStatusToCIN(next.data[0]);
+        buffer[bufLen++] = next.data[0];
+        buffer[bufLen++] = (next.data[1]);
+        buffer[bufLen++] = (next.data[2]);
+    }
+
+    memcpy(midiOutTransfer->data_buffer, buffer, bufLen);
+    midiOutTransfer->num_bytes = bufLen;
+    outTransferInFlight = true;
+    usb_host_transfer_submit(midiOutTransfer);
+}
+
+bool USBConnection::sendMidi(const uint8_t* data, size_t length) {
+    bool ok = enqueueMidiOut(data, length);
+    processOutQueue(); // kick-start if no transfer in flight (no-op when busy)
+    return ok;
+}
+
+
 void USBConnection::_onReceive(usb_transfer_t *transfer) {
     USBConnection *usbCon = static_cast<USBConnection*>(transfer->context);
     usbCon->transferInFlight = false;
@@ -223,6 +324,13 @@ void USBConnection::_onReceive(usb_transfer_t *transfer) {
         usb_host_transfer_submit(transfer);
     }
 }
+
+void USBConnection::_onSend(usb_transfer_t *transfer) {
+    USBConnection *usbCon = static_cast<USBConnection*>(transfer->context);
+    usbCon->outTransferInFlight = false;
+    usbCon->processOutQueue(); // send next queued message if any
+}
+
 
 void USBConnection::_processConfig(const usb_config_desc_t *config_desc) {
     const uint8_t* p = config_desc->val;
@@ -281,6 +389,17 @@ void USBConnection::_processConfig(const usb_config_desc_t *config_desc) {
                                         vTaskDelay(pdMS_TO_TICKS(200)); // Delay for CT-S1 before first transfer
                                         usb_host_transfer_submit(midiTransfer);  // first transfer after setup
                                         return;
+                                    }
+                                } else {
+                                    // OUT endpoint — ESP32 to keyboard
+                                    Serial.printf("[USB] OUT ep=0x%02X attr=0x%02X mps=%d\n", bEndpointAddress, bmAttributes, wMaxPacketSize);
+                                    esp_err_t e3 = usb_host_transfer_alloc(wMaxPacketSize, 0, &midiOutTransfer);
+                                    if (e3 == ESP_OK && midiOutTransfer != nullptr) {
+                                        midiOutTransfer->device_handle    = deviceHandle;
+                                        midiOutTransfer->bEndpointAddress = bEndpointAddress;
+                                        midiOutTransfer->callback         = _onSend;
+                                        midiOutTransfer->context          = this;
+                                        Serial.printf("[USB] OUT endpoint claimed: 0x%02X\n", bEndpointAddress);
                                     }
                                 }
                             }

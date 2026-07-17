@@ -30,7 +30,11 @@ public:
 
     // Returns whether the USB connection is ready.
     bool isConnected() const { return isReady; }
-
+    // Send MIDI data out to the keyboard over USB
+    bool sendMidi(const uint8_t* data, size_t length);
+    // Queue a MIDI message for outbound USB transmission
+    bool enqueueMidiOut(const uint8_t* data, size_t length);
+    void processOutQueue();
     // Returns the last error message (empty if none).
     const String& getLastError() const { return lastError; }
 
@@ -55,17 +59,26 @@ protected:
     usb_device_handle_t deviceHandle;
     uint32_t eventFlags;
     usb_transfer_t* midiTransfer;
+    usb_transfer_t* midiOutTransfer;
+
 
     // Ring buffer for raw USB packets.
     // Protected by spinlock for thread-safe access on dual-core ESP32.
-    static const int QUEUE_SIZE = 64;
+    static const int QUEUE_SIZE = 128;
     RawUsbMessage usbQueue[QUEUE_SIZE];
     volatile int queueHead;
     volatile int queueTail;
+    portMUX_TYPE queueMux;
+    // Outbound queue
+    RawUsbMessage usbOutQueue[QUEUE_SIZE];
+    volatile int outQueueHead;
+    volatile int outQueueTail;
+    portMUX_TYPE outQueueMux;
+    volatile bool outTransferInFlight;
     volatile bool transferInFlight;
+
     volatile bool enumRetryPending;
     uint32_t enumRetryTime;
-    portMUX_TYPE queueMux;
 
     // Connection control data
     bool firstMidiReceived;
@@ -85,6 +98,7 @@ protected:
     // Internal USB Host callbacks.
     static void _clientEventCallback(const usb_host_client_event_msg_t *eventMsg, void *arg);
     static void _onReceive(usb_transfer_t *transfer);
+    static void _onSend(usb_transfer_t *transfer);
     void _processConfig(const usb_config_desc_t *config_desc);
 };
 

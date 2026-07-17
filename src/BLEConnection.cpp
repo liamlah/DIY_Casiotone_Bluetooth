@@ -1,7 +1,11 @@
+// Originally based on ESP32_Host_MIDI by Saulo Veríssimo 
+// https://github.com/sauloverissimo/ESP32_Host_MIDI 
+// Modified by Liam Jones, 2025
+
 #include "BLEConnection.h"
 
 BLEConnection::BLEConnection()
-    : pServer(nullptr), pCharacteristic(nullptr), pBleCallback(nullptr), midiCallback(nullptr)
+    : pServer(nullptr), pCharacteristic(nullptr), pBleCallback(nullptr), midiCallback(nullptr),rxHead(0),rxTail(0),rxMux(portMUX_INITIALIZER_UNLOCKED)
 {
 }
 
@@ -39,16 +43,20 @@ void BLEConnection::begin(const std::string& deviceName) {
         BLEConnection* bleCon;
         BLECallback(BLEConnection* con) : bleCon(con) {}
         void onWrite(BLECharacteristic* characteristic) override {
-            std::string rxValue = std::string(characteristic->getValue().c_str());
-            // If at least 4 bytes are available, extract the first 4.
-            if(rxValue.size() >= 4) {
-                const uint8_t* data = reinterpret_cast<const uint8_t*>(rxValue.data());
-                // Invoke the user-defined callback (if set).
-                if(bleCon->midiCallback) {
-                    bleCon->midiCallback(data, 4);
+            // getData()/getLength() preserve zero bytes — never use c_str() on MIDI data
+            const uint8_t* data = characteristic->getData();
+            size_t len = characteristic->getLength();
+
+            // Enqueue only — never parse or touch USB from the BT task
+            if (len >= 3 && len <= sizeof(BleRxPacket::data)) {
+                portENTER_CRITICAL(&bleCon->rxMux);
+                int next = (bleCon->rxHead + 1) % RX_QUEUE_SIZE;
+                if (next != bleCon->rxTail) {
+                    memcpy(bleCon->rxQueue[bleCon->rxHead].data, data, len);
+                    bleCon->rxQueue[bleCon->rxHead].length = len;
+                    bleCon->rxHead = next;
                 }
-                // Also invoke the virtual callback so subclasses can override.
-                bleCon->onMidiDataReceived(data, 4);
+                portEXIT_CRITICAL(&bleCon->rxMux);
             }
         }
     };
@@ -74,7 +82,20 @@ bool BLEConnection::sendMidi(const uint8_t* data, size_t length) {
 }
 
 void BLEConnection::task() {
-    // BLE generally does not require periodic processing.
+    while (true) {
+        BleRxPacket pkt;
+        portENTER_CRITICAL(&rxMux);
+        if (rxTail == rxHead) {
+            portEXIT_CRITICAL(&rxMux);
+            break;
+        }
+        pkt = rxQueue[rxTail];
+        rxTail = (rxTail + 1) % RX_QUEUE_SIZE;
+        portEXIT_CRITICAL(&rxMux);
+
+        if (midiCallback) midiCallback(pkt.data, pkt.length);
+        onMidiDataReceived(pkt.data, pkt.length);
+    }
 }
 
 bool BLEConnection::isConnected() const {

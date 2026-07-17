@@ -1,3 +1,7 @@
+// Originally based on ESP32_Host_MIDI by Saulo Veríssimo 
+// https://github.com/sauloverissimo/ESP32_Host_MIDI 
+// Modified by Liam Jones, 2025
+
 #ifndef BLE_CONNECTION_H
 #define BLE_CONNECTION_H
 
@@ -48,6 +52,16 @@ protected:
     BLECharacteristic* pCharacteristic;
     BLECharacteristicCallbacks* pBleCallback;  // Managed to prevent memory leak
     MIDIMessageCallback midiCallback;
+
+public:
+    // RX ring buffer — onWrite() enqueues, task() drains.
+    // Keeps the BT host task fast so controller ACL buffers don't exhaust.
+    struct BleRxPacket { uint8_t data[20]; uint8_t length; };
+    static const int RX_QUEUE_SIZE = 64;
+    BleRxPacket rxQueue[RX_QUEUE_SIZE];
+    volatile int rxHead;
+    volatile int rxTail;
+    portMUX_TYPE rxMux;
 };
 
 #endif // BLE_CONNECTION_H
