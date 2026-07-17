@@ -37,7 +37,7 @@ This project mimics the BLE Midi functionality of the WU-BT10, allowing pairing 
 
 **Unlike the WU-BT10, this project *does not* support bluetooth audio-in, this is a limitation of the Micro USB port on the Casiotone devices, which does not USB Audio Class as a device.**
 
-Sending MIDI notes from the keyboard via the device to a DAW works flawlessly in testing, with the minimal latency expected with BLE. However, receving MIDI from a DAW to play via keyboard speakers as you experience with a direct USB connection is currently a work in progress. 
+Sending MIDI notes from the keyboard via the device to a DAW works flawlessly in testing, with the minimal latency expected with BLE. _As of the mid july update, bidirectional MIDI now works reliably. _
 
 ---
 
@@ -146,5 +146,5 @@ Change this to whatever you want it to be broadcast as, but note the 'Casio Musi
 ## Issues
 
 - [ ] Device does not cleanly reconnect if connection is lost (e.g if the port is jostled). The current workaround is that the board automatically reboots on a lost USB connection. This increases reliability with the keyboard, but means BLE must be re-paired with your device. This is a minor issue when using reliable cables. Contributions are welcome for this fix.
-- [ ] MIDI is unidirectional presently. Keyboard > ESP32 > MIDI app. I haven't been able to reliably implement it bidirectionally (so you can't transmit tones from MIDI app to keyboard speakers) without significant issues with notes getting dropped. Feature is off until I can work out a solution.
+- [X] ~~MIDI is unidirectional presently. Keyboard > ESP32 > MIDI app. I haven't been able to reliably implement it bidirectionally (so you can't transmit tones from MIDI app to keyboard speakers) without significant issues with notes getting dropped. Feature is off until I can work out a solution.~~ Solved. Now works reliably unidirectionally.
 
