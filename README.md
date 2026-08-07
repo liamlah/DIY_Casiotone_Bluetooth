@@ -44,7 +44,7 @@ Sending MIDI notes from the keyboard via the device to a DAW works flawlessly in
 
 
 ## Soldering
-In order to initiate a handshake with the micro usb port on the keyboard, the keyboard's port must receive power from the ESP32 board. At factory configuration, the OTG port does not provide power. This is easily addressed by shorting two jumper pads on the bottom of the board. This should not be daunting even for those without previous soldering experience.
+In order to initiate a handshake with the micro usb port on the keyboard, the keyboard's port must receive power from the ESP32 board. At factory configuration, the USB port does not provide power. This is easily addressed by shorting two jumper pads on the bottom of the board. This should not be daunting even for those without previous soldering experience.
 
 <img src="https://github.com/user-attachments/assets/d6b4349f-8bb8-4ade-8848-3ed296a593ad" width="400" />
 <img src="https://github.com/user-attachments/assets/4ad86d60-96f9-4796-8f7c-5a6448239871" width="400" />
@@ -79,7 +79,7 @@ Visit the [Github.io](https://liamlah.github.io/DIY_Casiotone_Bluetooth/) page f
 
 ## Cable Configuration
  
-The ESP32-S3 has two USB ports, on the under side of the board, these are labelled OTG, and COM. We will use COM to power the device using the USB A port on the back of the Casiotone keyboard, we will then connect the OTG port to the micro usb port on the back of the Casiotone keyboard using an OTG cable and a micro usb cable. this is from where it will recieve the MIDI signals. When the ESP32 is inside a [case](#Case), the OTG cable will be on the same side as the LED
+The ESP32-S3 has two USB ports, on the under side of the board, these are labelled USB, and COM. We will use COM to power the device using the USB A port on the back of the Casiotone keyboard, we will then connect the UBS labelled port to the micro usb port on the back of the Casiotone keyboard using a cable with USB C on one end and micro USB on the other. this is from where it will recieve the MIDI signals. When the ESP32 is inside a [case](#Case), the USB labelled cable will be on the same side as the LED
 
 Unlike the WU-BT10, we cannot use the USB A port for MIDI out, as it uses a proprietary handshake to connect to the WU-BT 10. We can however exploit it to power our imposter device. 
 
@@ -106,9 +106,9 @@ The LED on the top of the board can be used to visually check the current state 
 
 ### Nothing happens when I plug the device into the keyboard
 
-- If you have the Arduino IDE, run the device while connected to the IDE via COM port, and the keyboard via OTG with the serial monitor open to see error messages.
+- If you have the Arduino IDE, run the device while connected to the IDE via COM port, and the keyboard via USB with the serial monitor open to see error messages.
 - Try a different cable. If you are using a cheap cable, it may be for charging only.
-- Try flipping the orientation of the OTG cable, and ensure it is pushed fully into the USB port on the ESP32 device.
+- Try flipping the orientation of the USB cable, and ensure it is pushed fully into the USB port on the ESP32 device.
 
 ### The ESP32 connects but easily disconnects
 
