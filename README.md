@@ -1,7 +1,7 @@
-# DIY Casiotone Bluetooth 🎹📡
+# Portamentum MIDI 🎹📡
 
 
-This project is intended to provide a low cost alternative to the Casio [WU-BT10](https://www.casio.com/intl/electronic-musical-instruments/options/product.WU-BT10/) for Casiotone keyboard models; AP-300, AP-550, AP-750, AP-S190, AP-S200, AP-S450, CDP-S360, CT-S1-76,  CT-S1000V, CT-S1,CT-S400, CT-S410, CT-S500, LK-S450, PX-S1100, PX-S3100, PX-S5000, PX-S6000, PX-S7000
+This project is intended to provide a DIY low cost alternative to the Casio [WU-BT10](https://www.casio.com/intl/electronic-musical-instruments/options/product.WU-BT10/) for Casiotone keyboard models; AP-300, AP-550, AP-750, AP-S190, AP-S200, AP-S450, CDP-S360, CT-S1-76,  CT-S1000V, CT-S1,CT-S400, CT-S410, CT-S500, LK-S450, PX-S1100, PX-S3100, PX-S5000, PX-S6000, PX-S7000
 
 Note: This has only been tested on the Casiotone CT-S1, but should work on any Casiotone keyboard listed above provided they have both a micro USB, and an USB A port.
 
