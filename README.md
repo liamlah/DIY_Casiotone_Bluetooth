@@ -59,7 +59,7 @@ One might be temped to try a split OTG cable (such as [this](https://www.amazon.
 
 ### Installing from Binary (easiest)
 
-Visit the [Github.io](https://liamlah.github.io/DIY_Casiotone_Bluetooth/) page for a one-click install, Then skip to [Cable Configuration](#cable-configuration).
+Visit the [Github.io](https://liamlah.github.io/Portamentum-MIDI/) page for a one-click install, Then skip to [Cable Configuration](#cable-configuration).
 
 ### Compiling Yourself (If not installing from binary)
 
